@@ -4,6 +4,7 @@ import os
 from astropy import coordinates, units
 from astropy.table import Table
 import pandas as pd
+from scipy.optimize import curve_fit
 
 from my_utils import generate_distributed_sample, run_gradient_sim
 
@@ -124,10 +125,28 @@ def run_scenario(data, n_stars_array, **params):
 
     return scenario_results
 
+def flatten_gradient(data, result, **_ignored):
+    med_slope = result['med_slope']
+    metallicity_detrend = data['Fe/H_evolved'] - med_slope * data['R']
+    return metallicity_detrend
+
+def wrap_azimuth(azimuth): # if needed
+    """Return a boolean mask for azimuth values that are continuous at azimuth=0."""
+    azimuth_wrapped = np.copy(azimuth)
+    azimuth_wrapped[azimuth > np.pi] -= 2 * np.pi 
+    return azimuth_wrapped
+
+
+
+def apply_fft(azimuth_wrapped , metallicity_detrend **_ignored):
+    # Apply FFT to the detrended metallicity data
+    # requires np.fft.fftshift and np.fft.fftfreq to get the correct frequency bins
+    n_fft = len(metallicity_detrend)
+    fft_result = np.fft.fftshift(np.fft.fft(metallicity_detrend, n = n_fft))
+    fft_frequencies = np.fft.fftfreq(n_fft)
+
+    return fft_result, fft_frequencies
+
 
 def apply_custom_metallicity_profile():
-    """
-    A placeholder function to apply a custom metallicity profile to the data.
-    This function should be implemented based on the specific requirements of the metallicity profile.
-    """
     pass
