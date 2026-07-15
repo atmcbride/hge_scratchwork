@@ -10,6 +10,17 @@ from scipy.signal import lombscargle
 from my_utils import generate_distributed_sample, run_gradient_sim
 
 
+def compute_azimuthal_abund_perturbations(azimuth, amplitude=0.05, period=2.5):
+    #Assumes variations take the form of a radius-independent sine wave
+    #This does not add noise, simply changes the "true" value
+    #Period is in radians
+    n_pts = len(azimuth)
+    #perturbations = np.random.normal(loc=0, scale=amplitude, size=n_pts)
+    return amplitude * np.sin(2*np.pi*azimuth/period)
+
+gal_az = np.arctan2(gal_y.value, gal_x.value) + np.pi
+az_shifted_feh = all_stars['Fe/H_evolved'] + compute_azimuthal_abund_perturbations(gal_az, amplitude=0.05, period=2.5)
+
 def load_synthetic_data(directory="hge_gums_marshall"):
     # Load in the data
     all_csv_files = [
@@ -137,7 +148,7 @@ def wrap_azimuth(azimuth): # if needed
     azimuth_wrapped[azimuth > np.pi] -= 2 * np.pi 
     return azimuth_wrapped
 
-def apply_fft(azimuth_wrapped , metallicity_detrend **_ignored):
+def apply_fft(azimuth_wrapped, metallicity_detrend, **_ignored):
     # Apply FFT to the detrended metallicity data
     # requires np.fft.fftshift and np.fft.fftfreq to get the correct frequency bins
     n_fft = len(metallicity_detrend)
