@@ -5,6 +5,7 @@ from astropy import coordinates, units
 from astropy.table import Table
 import pandas as pd
 from scipy.optimize import curve_fit
+from scipy.signal import lombscargle
 
 from my_utils import generate_distributed_sample, run_gradient_sim
 
@@ -136,17 +137,21 @@ def wrap_azimuth(azimuth): # if needed
     azimuth_wrapped[azimuth > np.pi] -= 2 * np.pi 
     return azimuth_wrapped
 
-
-
 def apply_fft(azimuth_wrapped , metallicity_detrend **_ignored):
     # Apply FFT to the detrended metallicity data
     # requires np.fft.fftshift and np.fft.fftfreq to get the correct frequency bins
     n_fft = len(metallicity_detrend)
     fft_result = np.fft.fftshift(np.fft.fft(metallicity_detrend, n = n_fft))
     fft_frequencies = np.fft.fftfreq(n_fft)
-
     return fft_result, fft_frequencies
 
+def apply_lombscargle(azimuth_wrapped, metallicity_detrend, **_ignored):
+    frequencies = np.linspace(0.01, 10, 1000) 
+    
+    # Apply Lomb-Scargle periodogram to the detrended metallicity data
+    pdgram = lombscargle(azimuth_wrapped, metallicity_detrend, frequencies)
+
+    return pdgram, frequencies
 
 def apply_custom_metallicity_profile():
     pass
